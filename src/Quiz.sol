@@ -10,7 +10,7 @@ contract Quiz{
       uint max_bet;
    }
     uint public quiz_num = 0;
-    mapping(bytes32 => Quiz_item) public quizs;
+    mapping(uint => Quiz_item) public quizs;
     mapping(address => uint256)[] public bets;
     mapping(address => uint256) public balances;
     uint public vault_balance;
@@ -23,25 +23,22 @@ contract Quiz{
         q.min_bet = 1 ether;
         q.max_bet = 2 ether;
         addQuiz(q);
+        bets.push();
     }
 
     function addQuiz(Quiz_item memory q) public{
         require(msg.sender != address(1));
-        bets.push();
-        bytes32 slot = (keccak256(abi.encodePacked(q.id)));
-        quizs[slot] = q;
+        quizs[q.id] = q;
         quiz_num += 1;
     }
 
     function getAnswer(uint quizId) public view returns (string memory){
-        bytes32 slot = (keccak256(abi.encodePacked(quizId)));
-        Quiz_item memory q = quizs[slot];
+        Quiz_item memory q = quizs[quizId];
         return q.answer;
     }
 
     function getQuiz(uint quizId) public view returns (Quiz_item memory) {
-        bytes32 slot = (keccak256(abi.encodePacked(quizId)));
-        Quiz_item memory q = quizs[slot];
+        Quiz_item memory q = quizs[quizId];
         q.answer = "";
         return q;
     }
@@ -51,15 +48,13 @@ contract Quiz{
     }
     
     function betToPlay(uint quizId) public payable {
-        bytes32 slot = keccak256(abi.encodePacked(quizId));
-        Quiz_item memory q = quizs[slot];
+        Quiz_item memory q = quizs[quizId];
         require(q.min_bet <= msg.value && msg.value <= q.max_bet);
         bets[quizId-1][msg.sender] += msg.value;
     }   
     
     function solveQuiz(uint quizId, string memory ans) public returns (bool) {
-        bytes32 slot = keccak256(abi.encodePacked(quizId));
-        Quiz_item memory q = quizs[slot];
+        Quiz_item memory q = quizs[quizId];
         bool res = keccak256(abi.encodePacked(q.answer)) == keccak256(abi.encodePacked(ans));
         if (res) {
             balances[msg.sender] += bets[quizId-1][msg.sender] * 2;
